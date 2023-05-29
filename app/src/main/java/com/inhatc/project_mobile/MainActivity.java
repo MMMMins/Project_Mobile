@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if(v == btnSignUp) {
             //액티비티 전환
+            //회원가입
         }
 
         if(v == btnReset){
