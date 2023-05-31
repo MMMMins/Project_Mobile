@@ -2,7 +2,7 @@ package com.inhatc.project_mobile;
 
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -21,9 +21,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText edtUserPwd;
     private EditText edtUserCode;
     private Button btnLogin;
-    private Button btnSignUp;
+    private Button btnSignUpLoad;
     private ImageButton btnReset;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,8 +43,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnReset = findViewById(R.id.btnReset);
         btnReset.setOnClickListener(this);
 
-        btnSignUp = findViewById(R.id.btnSignUp);
-        btnSignUp.setOnClickListener(this);
+        btnSignUpLoad = findViewById(R.id.btnSignUpLoad);
+        btnSignUpLoad.setOnClickListener(this);
 
 
     }
@@ -89,8 +90,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(this,edtUserID.getText().toString()+"님 반갑습니다.",Toast.LENGTH_SHORT).show();
         }
 
-        if(v == btnSignUp) {
+        if(v == btnSignUpLoad) {
             //액티비티 전환
+            Intent signUpLoad = new Intent(MainActivity.this, SignUpActivity.class);
+            startActivity(signUpLoad);
             //회원가입
         }
 
