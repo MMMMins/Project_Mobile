@@ -96,6 +96,8 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+
+    //email을 uid로 변환
     public String emailToUUID(@NonNull Task<DataSnapshot> task, String searchEmail){
         HashMap<String, HashMap<String, Object>> userMap = (HashMap<String, HashMap<String, Object>>) task.getResult().child("users").getValue();
         String[] uuidList = userMap.keySet().toArray(new String[0]);
@@ -116,6 +118,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         return searchUID;
     }
 
+    // 친구추가 버튼클릭시
     public void friendsListInsert(String insertEmail){
         Log.d("method :", "friendsListInsert 메소드 실행");
         mDatabase = mFirebase.getReference();
@@ -156,6 +159,8 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         });
         Log.d("method :", "friendsListInsert 메소드 종료");
     }
+
+    // 이메일 검색시
     public void getSearchUser(String searchEmail){
         Log.d("method :", "getSearchUser 메소드 실행");
         mDatabase = mFirebase.getReference();
