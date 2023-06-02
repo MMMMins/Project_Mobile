@@ -1,12 +1,15 @@
 package com.inhatc.project_mobile;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,6 +19,8 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class AppMainActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -41,9 +47,11 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
     private Button btnFriInsert;
     private TextView txtSearchEmail;
     private TextView txtSearchName;
-
+    private ListView roomList;
     private String loginUID;
-
+    private String loginName;
+    private List<User> tempList;
+    private String roomName;
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +65,8 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         btnFriInsert.setOnClickListener(this);
         txtSearchName = findViewById(R.id.txtSearchName);
         txtSearchEmail = findViewById(R.id.txtSearchEmail);
-
+        userList = findViewById(R.id.lstUser);
+        roomList = findViewById(R.id.lstRoom);
 
         tabHost = (TabHost)findViewById(R.id.tabhost);
         tabHost.setup();
@@ -74,7 +83,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         tabHost.setCurrentTab(0);
         mFirebase = FirebaseDatabase.getInstance();
 
-        userList = findViewById(R.id.lstUser);
+        tabHost.getTabWidget().getChildAt(1).setOnClickListener(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -84,7 +93,16 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
 
         //유저 목록 출력
         getUserList();
+
+        userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                roomName = tempList.get(position).getName();
+                isChatRoom(tempList.get(position).getUid());
+            }
+        });
     }
+
 
     @Override
     public void onClick(View v){
@@ -94,8 +112,45 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         if(v == btnFriInsert){
             friendsListInsert(txtSearchEmail.getText().toString());
         }
+        if(v == tabHost.getTabWidget().getChildAt(1)){
+
+        }
     }
 
+    public void goChatRoom(String otherUID, String roomKey){
+        Intent chatIntent = new Intent(AppMainActivity.this, ChatActivity.class);
+        chatIntent.putExtra("loginUID", loginUID);
+        chatIntent.putExtra("otherUID", otherUID);
+        chatIntent.putExtra("roomKey", roomKey);
+        chatIntent.putExtra("roomName", roomName);
+        startActivity(chatIntent);
+    }
+    public void isChatRoom(String otherUID){
+        mDatabase = mFirebase.getReference("chatRoom");
+        mDatabase.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if(!task.isSuccessful()){
+                    Log.e("isChatRoom() :", "DB 연동실패");
+                }else{
+                    String roomKey;
+                    HashMap<String, Object> map = (HashMap<String, Object>) task.getResult().child("chatRooms").getValue();
+                    if(map.containsKey("users@"+loginUID+"@"+otherUID)){
+                        roomKey = (String) map.get("users@"+loginUID+"@"+otherUID);
+                    }else if(map.containsKey("users@"+otherUID+"@"+loginUID)){
+                        roomKey = (String) map.get("users@"+otherUID+"@"+loginUID);
+                    }else{
+                        UUID uid = UUID.randomUUID();
+                        Map<String, Object> chatUidSet = new HashMap<>();
+                        roomKey = uid.toString();
+                        chatUidSet.put("users@"+loginUID+"@"+otherUID,roomKey);
+                        mDatabase.child("chatRooms").updateChildren(chatUidSet);
+                    }
+                    goChatRoom(otherUID, roomKey);
+                }
+            }
+        });
+    }
 
     //email을 uid로 변환
     public String emailToUUID(@NonNull Task<DataSnapshot> task, String searchEmail){
@@ -125,7 +180,6 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         mDatabase.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
-
                 if (!task.isSuccessful()) {
                     Log.d("friendsListInsert :", "DB 연동실패");
                 }
@@ -199,6 +253,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         Log.d("method :", "getSearchUser 메소드 종료");
     }
     public void getUserList(){
+        tempList = new ArrayList<>();
         Log.d("method :", "getUserList 메소드 실행");
         mDatabase = mFirebase.getReference();
         mDatabase.addValueEventListener(new ValueEventListener() {
@@ -210,6 +265,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                 String friendsKey;
 
                 Log.d("getUserList :", "친구 관계 조회");
+
                 if(dataSnapshot.child("friends").getChildrenCount() == 0) return;
                 for(DataSnapshot postSnapshot: dataSnapshot.child("friends").getChildren()){
                     //친구관계 Key -> (Key -> 친구UID)
@@ -233,6 +289,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                     int keyIndex = friendsList.indexOf(friendsKey);
                     if(keyIndex != -1){
                         HashMap<String,String> map = (HashMap<String, String>) postSnapshot.getValue();
+                        tempList.add(new User(map.get("name"),map.get("email"), friendsKey));
                         list.add(map.get("name"));
                     }
                 }
