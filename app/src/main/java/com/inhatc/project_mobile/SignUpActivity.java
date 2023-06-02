@@ -76,7 +76,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                 return;
             }
 
-            //캡챠 코드인증
+//            //캡챠 코드인증
             if (!code.equals(GeneratorCaptcha.getCaptchaCode())){
                 GeneratorCaptcha.resetCaptcha();
                 signCaptchaImageView.setImageBitmap(GeneratorCaptcha.getCaptchaImage());
@@ -133,7 +133,6 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     public void signupDB(User user, String uid){
         /*
             Realtime DataBase구조
-            user의 정보
             users
                 uid
                     email : value

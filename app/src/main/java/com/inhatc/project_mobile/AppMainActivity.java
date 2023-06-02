@@ -79,7 +79,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             // 전달된 데이터 가져오기
-             loginUID = extras.getString("UID");
+            loginUID = extras.getString("UID");
         }
 
         //유저 목록 출력
@@ -106,12 +106,12 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         //검색한 이메일의 User UID 찾기
         for(String userUID : uuidList){
             // User UID 탐색중에 로그인한 UID와 같다면 패스
-            if(loginUID.equals(userUID)) continue;
+            if(loginUID.equals(userUID.trim())) continue;
 
             // 검색한 Email과 찾은 Email이 같다면
-            String targetEmail = userMap.get(userUID).get("email").toString();
+            String targetEmail = userMap.get(userUID.trim()).get("email").toString();
             if(searchEmail.equals(targetEmail)){
-                searchUID = userUID;
+                searchUID = userUID.trim();
                 break;
             }
         }
@@ -141,6 +141,12 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                         return;
                     }
 
+                    if(task.getResult().child("friends").child(loginUID).getChildrenCount() == 0){
+                        updateMap.put(searchUID,true);
+                        Log.d("friendsListInsert :", insertEmail+"("+searchUID+") 이 성공적으로 갱신되었습니다.");
+                        mFirebase.getReference().child("friends").child(loginUID).setValue(updateMap);
+                        return;
+                    }
                     HashMap<String, HashMap<String, Object>> friendsMap = (HashMap<String, HashMap<String, Object>>) task.getResult().child("friends").getValue();
                     String[] fuidArray = friendsMap.get(loginUID).keySet().toArray(new String[0]);
                     if(fuidArray.length != 0) {
@@ -174,7 +180,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                 else {
                     Log.d("getSearchUser :", "DB 연동성공");
                     String searchUID = emailToUUID(task, searchEmail);
-                    if(searchUID.isEmpty()){
+                    if(searchUID == null){
                         txtSearchEmail.setText("");
                         txtSearchName.setText("");
                         btnFriInsert.setVisibility(View.INVISIBLE);
@@ -221,6 +227,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
 
                 Log.d("getUserList :", "친구 리스트 구현");
                 //친구목록
+                if(friendsList.size() == 0) return;
                 for(DataSnapshot postSnapshot: dataSnapshot.child("users").getChildren()){
                     friendsKey = postSnapshot.getKey();
                     int keyIndex = friendsList.indexOf(friendsKey);
