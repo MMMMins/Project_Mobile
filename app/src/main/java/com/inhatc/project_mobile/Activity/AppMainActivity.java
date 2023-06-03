@@ -1,7 +1,6 @@
-package com.inhatc.project_mobile;
+package com.inhatc.project_mobile.Activity;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
@@ -19,13 +18,13 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.tabs.TabLayout;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.inhatc.project_mobile.R;
+import com.inhatc.project_mobile.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,17 +129,27 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                 }else{
                     String roomKey;
                     HashMap<String, Object> map = (HashMap<String, Object>) task.getResult().child("chatRooms").getValue();
+                    /*
+                        DB 구조
+                        chatRoom
+                            chatRooms
+                                users@loginUID@otherUID:true
+                     */
+
+                    // 나랑 상대방이 포함된 방이 있는지 찾는다.
                     if(map.containsKey("users@"+loginUID+"@"+otherUID)){
                         roomKey = (String) map.get("users@"+loginUID+"@"+otherUID);
                     }else if(map.containsKey("users@"+otherUID+"@"+loginUID)){
                         roomKey = (String) map.get("users@"+otherUID+"@"+loginUID);
                     }else{
+                        // 없으면 생성
                         UUID uid = UUID.randomUUID();
                         Map<String, Object> chatUidSet = new HashMap<>();
                         roomKey = uid.toString();
                         chatUidSet.put("users@"+loginUID+"@"+otherUID,roomKey);
                         mDatabase.child("chatRooms").updateChildren(chatUidSet);
                     }
+                    // 해당 채팅방으로 이동하기 위한 메소드
                     goChatRoom(otherUID, roomKey);
                 }
             }
@@ -176,29 +185,37 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
                 if (!task.isSuccessful()) {
-                    Log.d("friendsListInsert :", "DB 연동실패");
+                    Log.e("friendsListInsert :", "DB 연동실패");
                 }
                 else {
                     Log.d("friendsListInsert :", "DB 연동성공");
 
+                    // 입력받은 이메일을 통해 UID를 찾는다
                     String searchUID = emailToUUID(task, insertEmail);
+
+                    // 친구목록에 추가를 위한 HashMap
                     HashMap<String, Object> updateMap = new HashMap<>();
+
+                    // friends라는 칼럼이 없다면 내 칼럼 생성 후 UserUID 하단에 친구 추가
                     if(task.getResult().child("friends").getChildrenCount() == 0){
                         updateMap.put(searchUID,true);
                         Log.d("friendsListInsert :", insertEmail+"("+searchUID+") 이 성공적으로 갱신되었습니다.");
                         mFirebase.getReference().child("friends").child(loginUID).setValue(updateMap);
                         return;
                     }
-
+                    // UserUID칼럼이 없다면 생성 후 하단에 친구추가
                     if(task.getResult().child("friends").child(loginUID).getChildrenCount() == 0){
                         updateMap.put(searchUID,true);
                         Log.d("friendsListInsert :", insertEmail+"("+searchUID+") 이 성공적으로 갱신되었습니다.");
                         mFirebase.getReference().child("friends").child(loginUID).setValue(updateMap);
                         return;
                     }
+
+                    // friends칼럼의 모든 값을 가져오는 HashMap
                     HashMap<String, HashMap<String, Object>> friendsMap = (HashMap<String, HashMap<String, Object>>) task.getResult().child("friends").getValue();
                     String[] fuidArray = friendsMap.get(loginUID).keySet().toArray(new String[0]);
                     if(fuidArray.length != 0) {
+                        // 내가 찾은 Uid를 friends의 모든 키 값을 하나씩 비교해서 있으면, 친구사이
                         for (String fuid : fuidArray) {
                             if (searchUID.equals(fuid)) {
                                 Log.d("friendsListInsert :", "해당 유저와 이미 친구 사이입니다.");
@@ -206,6 +223,8 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                             }
                         }
                     }
+
+                    // 위에서 return으로 종료가 안되면, friends 칼럼 갱신
                     updateMap.put(searchUID, true);
                     mFirebase.getReference().child("friends").child(loginUID).updateChildren(updateMap);
                     Log.d("friendsListInsert :", insertEmail+"("+searchUID+") 이 성공적으로 갱신되었습니다.");
