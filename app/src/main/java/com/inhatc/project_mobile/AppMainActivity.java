@@ -83,8 +83,6 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         tabHost.setCurrentTab(0);
         mFirebase = FirebaseDatabase.getInstance();
 
-        tabHost.getTabWidget().getChildAt(1).setOnClickListener(this);
-
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             // 전달된 데이터 가져오기
@@ -111,9 +109,6 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         }
         if(v == btnFriInsert){
             friendsListInsert(txtSearchEmail.getText().toString());
-        }
-        if(v == tabHost.getTabWidget().getChildAt(1)){
-
         }
     }
 

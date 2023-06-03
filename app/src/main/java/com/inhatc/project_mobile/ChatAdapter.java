@@ -9,9 +9,16 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 public class ChatAdapter extends ArrayAdapter<ChatMessage> {
     private Context mContext;
@@ -40,13 +47,19 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
         TextView messageTextView = convertView.findViewById(R.id.messageTextView);
         TextView timeTextView = convertView.findViewById(R.id.timeTextView);
 
-        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        simpleDate.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
         Timestamp timestamp = Timestamp.valueOf(chatMessage.getTimestamp());
-        String strTime = simpleDate.format(timestamp);
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(timestamp);
+        Log.e("변환", cal.getTime().toString());
+        cal.add(Calendar.HOUR, 3);
+        cal.add(Calendar.MINUTE, 30);
 
+        Log.e("변환", cal.getTime().toString());
         messageTextView.setText(chatMessage.getMessage());
         nameTextView.setText(chatMessage.getName());
-        timeTextView.setText(strTime);
+        timeTextView.setText(simpleDate.format(cal.getTime()));
 
         if (chatUid.equals(uid)) {
             Log.e("정렬","우측");

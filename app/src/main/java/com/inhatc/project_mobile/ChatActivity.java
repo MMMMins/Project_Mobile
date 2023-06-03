@@ -24,10 +24,14 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 
 
@@ -88,14 +92,21 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             mDatabase = mFirebase.getReference("messages");
             String message = edtInputMessage.getText().toString();
             String name = userName;
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
+
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            String timestamp = now.toString();
+
             UUID uid = UUID.randomUUID();
-            chatMessage = new ChatMessage(message, name, timestamp.toString(), loginUID);
+            Log.e("asd",now.toString());
+            chatMessage = new ChatMessage(message, name, timestamp, loginUID);
             HashMap<String, Object> map = new HashMap<>();
+
             map.put("message",message);
             map.put("name",name);
             map.put("timestamp",timestamp.toString());
             map.put("uid",loginUID);
+
             if(roomCheck) {
                 mDatabase.child(roomKey).child(uid.toString()).updateChildren(map);
                 getMessage();
@@ -103,6 +114,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             else{
                 mDatabase.child(roomKey).child(uid.toString()).setValue(chatMessage);
                 getMessageList();
+                roomCheck = true;
             }
             edtInputMessage.setText("");
         }
@@ -132,9 +144,10 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                 userName = map.get("name");
                 if (task.getResult().child("messages").hasChild(roomKey)) {
                     DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
-                    Query query = messagesRef.child(roomKey).orderByChild("time");
+                    Query query = messagesRef.child(roomKey).orderByChild("timestamp");
 
                     Log.e("query", query.toString());
+
                     query.addChildEventListener(new ChildEventListener() {
                         @Override
                         public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String previousChildName) {
