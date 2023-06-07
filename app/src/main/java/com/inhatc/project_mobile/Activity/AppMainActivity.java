@@ -4,10 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -260,6 +262,8 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                     txtSearchName.setText(userMap.get(searchUID).get("name").toString());
                     txtSearchEmail.setText(userMap.get(searchUID).get("email").toString());
                     btnFriInsert.setVisibility(View.VISIBLE);
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(txtSearchEmail.getWindowToken(), 0);
                     Log.d("getSearchUser :", "검색결과(name:"+userMap.get(searchUID).get("name")+"|email:"+userMap.get(searchUID).get("email")+")");
                 }
             }

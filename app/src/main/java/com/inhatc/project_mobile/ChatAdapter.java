@@ -37,12 +37,14 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
     public View getView(int position, View convertView, ViewGroup parent) {
         ChatMessage chatMessage = getItem(position);
         String chatUid = chatMessage.getUid().trim();
-        if (convertView == null) {
-            if(chatUid.equals(uid))
+            if(chatUid.equals(uid)) {
                 convertView = LayoutInflater.from(mContext).inflate(R.layout.item_chat_my_message, parent, false);
-            else
+                Log.e("맞음", chatMessage.getUid()+"||"+chatMessage.getName());
+            } else{
                 convertView = LayoutInflater.from(mContext).inflate(R.layout.item_chat_other_message, parent, false);
-        }
+                Log.e("틀림", chatMessage.getUid()+"||"+chatMessage.getName());
+            }
+
         TextView nameTextView = convertView.findViewById(R.id.nameTextView);
         TextView messageTextView = convertView.findViewById(R.id.messageTextView);
         TextView timeTextView = convertView.findViewById(R.id.timeTextView);
@@ -52,9 +54,8 @@ public class ChatAdapter extends ArrayAdapter<ChatMessage> {
         Timestamp timestamp = Timestamp.valueOf(chatMessage.getTimestamp());
         Calendar cal = Calendar.getInstance();
         cal.setTime(timestamp);
-        Log.e("변환", cal.getTime().toString());
-        cal.add(Calendar.HOUR, 3);
-        cal.add(Calendar.MINUTE, 30);
+        //cal.add(Calendar.HOUR, 3);
+        //cal.add(Calendar.MINUTE, 30);
 
         Log.e("변환", cal.getTime().toString());
         messageTextView.setText(chatMessage.getMessage());

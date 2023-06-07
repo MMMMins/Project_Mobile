@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -22,6 +23,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.inhatc.project_mobile.ChatAdapter;
 import com.inhatc.project_mobile.ChatMessage;
+import com.inhatc.project_mobile.KeyboardVisibilityUtils;
 import com.inhatc.project_mobile.R;
 
 import java.sql.Timestamp;
@@ -33,7 +35,7 @@ import java.util.UUID;
 
 
 public class ChatActivity extends AppCompatActivity implements View.OnClickListener{
-
+    private KeyboardVisibilityUtils keyboardVisibilityUtils;
     private String loginUID;
     private String otherUID;
     private String roomKey;
@@ -77,6 +79,24 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         edtInputMessage = findViewById(R.id.edtChat);
         btnInput = findViewById(R.id.btnSend);
         btnInput.setOnClickListener(this);
+
+        //scrollView
+        ScrollView sv_root = findViewById(R.id.sv_root);
+        keyboardVisibilityUtils = new KeyboardVisibilityUtils(getWindow(), new KeyboardVisibilityUtils.OnKeyboardVisibilityChangeListener(){
+            @Override
+            public void onShowKeyboard(int keyboardHeight) {
+                sv_root.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sv_root.smoothScrollTo(sv_root.getScrollX(), sv_root.getScrollY() + keyboardHeight);
+                    }
+                });
+            }
+            @Override
+            public void onHideKeyboard(){
+
+            }
+        });
 
         // 채팅 리스트 초기화
         chatMessages = new ArrayList<>();
