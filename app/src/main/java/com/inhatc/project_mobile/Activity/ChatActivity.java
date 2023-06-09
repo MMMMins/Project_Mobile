@@ -138,10 +138,12 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             // roomCheck : false -> 기존 칼럼 없음, 칼럼 생성 및 값 생성
             if(roomCheck) {
                 mDatabase.child(roomKey).child(uid.toString()).updateChildren(map);
+                mFirebase.getReference("lastmessage").child(roomKey).updateChildren(map);
                 getMessage();
             }
             else{
                 mDatabase.child(roomKey).child(uid.toString()).setValue(chatMessage);
+                mFirebase.getReference("lastmessage").child(roomKey).setValue(map);
                 getMessageList();
                 roomCheck = true;
             }
