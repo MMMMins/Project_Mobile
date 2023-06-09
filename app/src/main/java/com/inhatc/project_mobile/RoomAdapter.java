@@ -31,7 +31,6 @@ public class RoomAdapter extends ArrayAdapter<ChatMessage> {
         ChatMessage chatMessage = getItem(position);
         convertView = LayoutInflater.from(mContext).inflate(R.layout.item_room, parent, false);
 
-
         TextView titleTextView = convertView.findViewById(R.id.edtRoomTitle);
         TextView timeTextView = convertView.findViewById(R.id.edtRoomTime);
         TextView messageTextView = convertView.findViewById(R.id.edtRoomLastMessage);
@@ -42,7 +41,6 @@ public class RoomAdapter extends ArrayAdapter<ChatMessage> {
         Calendar cal = Calendar.getInstance();
         cal.setTime(timestamp);
 
-        Log.e("변환", cal.getTime().toString());
         String[] names = chatMessage.getName().split("=");
         String message = (names[0].equals("같음")) ? "나: " : names[1]+": ";
 
