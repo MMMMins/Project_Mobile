@@ -6,8 +6,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
+import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -17,6 +21,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -30,6 +35,8 @@ import com.inhatc.project_mobile.ChatMessage;
 import com.inhatc.project_mobile.R;
 import com.inhatc.project_mobile.RoomAdapter;
 import com.inhatc.project_mobile.User;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +54,8 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
     private ArrayAdapter<String> adpater;
     private ArrayList<ChatMessage> chatRoomMessage;
     private RoomAdapter roomAdapter;
-
+    private TextView txtMyName;
+    private TextView txtMyEmail;
     private EditText edtSearch;
     private Button btnSearch;
     private Button btnFriInsert;
@@ -70,25 +78,48 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         btnFriInsert.setOnClickListener(this);
         txtSearchName = findViewById(R.id.txtSearchName);
         txtSearchEmail = findViewById(R.id.txtSearchEmail);
+        txtMyName = findViewById(R.id.txtMyName);
+        txtMyEmail = findViewById(R.id.txtMyEmail);
         userList = findViewById(R.id.lstUser);
         roomList = findViewById(R.id.lstRoom);
+
+
+        TextView tab1TextView = new TextView(this);
+        tab1TextView.setText("친구목록");
+        tab1TextView.setTextColor(Color.WHITE); // Set the desired text color
+        tab1TextView.setGravity(Gravity.CENTER); // Align the text to the center
+        tab1TextView.setTypeface(null, Typeface.BOLD); // Set the font to bold
+
+        TextView tab2TextView = new TextView(this);
+        tab2TextView.setText("메시지");
+        tab2TextView.setTextColor(Color.WHITE); // Set the desired text color
+        tab2TextView.setGravity(Gravity.CENTER); // Align the text to the center
+        tab2TextView.setTypeface(null, Typeface.BOLD); // Set the font to bold
+
+        TextView tab3TextView = new TextView(this);
+        tab3TextView.setText("친구추가");
+        tab3TextView.setTextColor(Color.WHITE);
+        tab3TextView.setGravity(Gravity.CENTER); // Align the text to the center
+        tab3TextView.setTypeface(null, Typeface.BOLD); // Set the font to bold
 
         tabHost = (TabHost)findViewById(R.id.tabhost);
         tabHost.setup();
 
-        tabSpec = tabHost.newTabSpec("친구목록").setIndicator("친구목록").setContent(R.id.tab1);
+        tabSpec = tabHost.newTabSpec("친구목록").setIndicator(tab1TextView).setContent(R.id.tab1);
         tabHost.addTab(tabSpec);
 
-        tabSpec = tabHost.newTabSpec("메시지").setIndicator("메시지").setContent(R.id.tab2);
+        tabSpec = tabHost.newTabSpec("메시지").setIndicator(tab2TextView).setContent(R.id.tab2);
         tabHost.addTab(tabSpec);
 
-        tabSpec = tabHost.newTabSpec("친구추가").setIndicator("친구추가").setContent(R.id.tab3);
+        tabSpec = tabHost.newTabSpec("친구추가").setIndicator(tab3TextView).setContent(R.id.tab3);
         tabHost.addTab(tabSpec);
 
         tabHost.setCurrentTab(0);
+
         mFirebase = FirebaseDatabase.getInstance();
 
         Bundle extras = getIntent().getExtras();
+
         if (extras != null) {
             // 전달된 데이터 가져오기
             loginUID = extras.getString("UID");
@@ -100,7 +131,9 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
 
         //유저 목록 출력
         getUserList();
-        getChatRoomList();
+        //채팅방 목록 출력
+//        getChatRoomList();
+
         userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -122,7 +155,6 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     protected void onResume() {
         super.onResume();
-
         //채팅방에서 뒤로 갔을때 채팅방목록 리스트 갱신
         chatRoomMessage = new ArrayList<>();
         roomAdapter = new RoomAdapter(this, chatRoomMessage);
@@ -252,6 +284,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                         for (String fuid : fuidArray) {
                             if (searchUID.equals(fuid)) {
                                 Log.d("friendsListInsert :", "해당 유저와 이미 친구 사이입니다.");
+                                Toast.makeText(AppMainActivity.this, "해당 유저와 이미 친구입니다.", Toast.LENGTH_SHORT).show();
                                 return;
                             }
                         }
@@ -261,6 +294,10 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                     updateMap.put(searchUID, true);
                     mFirebase.getReference().child("friends").child(loginUID).updateChildren(updateMap);
                     Log.d("friendsListInsert :", insertEmail+"("+searchUID+") 이 성공적으로 갱신되었습니다.");
+                    Toast.makeText(AppMainActivity.this, "친구추가 완료!", Toast.LENGTH_SHORT).show();
+                    txtSearchEmail.setVisibility(View.INVISIBLE);
+                    txtSearchName.setVisibility(View.INVISIBLE);
+                    edtSearch.setText("");
                 }
             }
         });
@@ -285,12 +322,15 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                         txtSearchName.setText("");
                         btnFriInsert.setVisibility(View.INVISIBLE);
                         Log.d("getSearchUser :", "검색결과가 없습니다.");
+                        Toast.makeText(AppMainActivity.this, "검색결과가 없습니다.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     HashMap<String, HashMap<String, Object>> userMap = (HashMap<String, HashMap<String, Object>>) task.getResult().child("users").getValue();
                     txtSearchName.setText(userMap.get(searchUID).get("name").toString());
                     txtSearchEmail.setText(userMap.get(searchUID).get("email").toString());
+                    txtSearchEmail.setVisibility(View.VISIBLE);
+                    txtSearchName.setVisibility(View.VISIBLE);
                     btnFriInsert.setVisibility(View.VISIBLE);
                     InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(txtSearchEmail.getWindowToken(), 0);
@@ -300,7 +340,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         });
         Log.d("method :", "getSearchUser 메소드 종료");
     }
-    public void getUserList(){
+    public void getUserList() {
         tempList = new ArrayList<>();
         Log.d("method :", "getUserList 메소드 실행");
         mDatabase = mFirebase.getReference();
@@ -314,16 +354,17 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
 
                 Log.d("getUserList :", "친구 관계 조회");
 
-                if(dataSnapshot.child("friends").getChildrenCount() == 0) return;
-                for(DataSnapshot postSnapshot: dataSnapshot.child("friends").getChildren()){
+                if (dataSnapshot.child("friends").getChildrenCount() == 0) return;
+                for (DataSnapshot postSnapshot : dataSnapshot.child("friends").getChildren()) {
                     //친구관계 Key -> (Key -> 친구UID)
                     friendsKey = postSnapshot.getKey().trim();
 
                     Map<String, Boolean> map = (HashMap<String, Boolean>) postSnapshot.getValue();
                     String[] friendsUID = map.keySet().toArray(new String[0]);
+
                     //로그인한 사람 UID랑 똑같은 키를 찾아서 저장
-                    if(friendsKey.equals(loginUID)){
-                        for(String uid : friendsUID){
+                    if (friendsKey.equals(loginUID)) {
+                        for (String uid : friendsUID) {
                             //현재 친구인 uid들을 리스트에 저장
                             friendsList.add(uid);
                         }
@@ -331,18 +372,23 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
                 }
 
                 Log.d("getUserList :", "친구 리스트 구현");
+
                 //친구목록
-                if(friendsList.size() == 0) return;
-                for(DataSnapshot postSnapshot: dataSnapshot.child("users").getChildren()){
+                if (friendsList.size() == 0) return;
+                for (DataSnapshot postSnapshot : dataSnapshot.child("users").getChildren()) {
                     friendsKey = postSnapshot.getKey();
 
                     int keyIndex = friendsList.indexOf(friendsKey);
-                    if(keyIndex != -1){
-                        HashMap<String,String> map = (HashMap<String, String>) postSnapshot.getValue();
-                        tempList.add(new User(map.get("name"),map.get("email"), friendsKey));
-                        list.add(map.get("name"));
+                    if (keyIndex != -1) {
+                        HashMap<String, String> map = (HashMap<String, String>) postSnapshot.getValue();
+                        tempList.add(new User(map.get("name"), map.get("email"), friendsKey));
+                        list.add(map.get("name")+"("+map.get("email")+")");
                     }
                 }
+
+
+
+
                 adpater = new ArrayAdapter<String>(AppMainActivity.this, android.R.layout.simple_list_item_1, list);
                 userList.setAdapter(adpater);
             }
@@ -354,6 +400,7 @@ public class AppMainActivity extends AppCompatActivity implements View.OnClickLi
         });
         Log.d("method :", "getUserList 메소드 종료");
     }
+
 
     public void getChatRoomList(){
         // 현재 사용자가 포함된 채팅방을 찾기
